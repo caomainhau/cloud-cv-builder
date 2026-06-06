@@ -63,6 +63,20 @@ CREATE TABLE IF NOT EXISTS login_attempts (
     UNIQUE(email_hash, ip_address)
 )
 SQL);
+
+            $pdo->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS resume_shares (
+    id SERIAL PRIMARY KEY,
+    resume_id INTEGER NOT NULL REFERENCES resumes(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NULL,
+    created_at TIMESTAMP NOT NULL,
+    revoked_at TIMESTAMP NULL,
+    last_viewed_at TIMESTAMP NULL,
+    view_count INTEGER NOT NULL DEFAULT 0
+)
+SQL);
         } else {
             $pdo->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS users (
@@ -120,11 +134,30 @@ CREATE TABLE IF NOT EXISTS login_attempts (
     UNIQUE(email_hash, ip_address)
 )
 SQL);
+
+            $pdo->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS resume_shares (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    resume_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NULL,
+    created_at TEXT NOT NULL,
+    revoked_at TEXT NULL,
+    last_viewed_at TEXT NULL,
+    view_count INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (resume_id) REFERENCES resumes(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)
+SQL);
         }
 
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON resumes(user_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_login_attempts_updated_at ON login_attempts(updated_at)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_resume_shares_resume_id ON resume_shares(resume_id)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_resume_shares_user_id ON resume_shares(user_id)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_resume_shares_expires_at ON resume_shares(expires_at)');
     }
 }

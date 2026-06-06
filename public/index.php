@@ -14,6 +14,19 @@ try {
         exit;
     }
 
+    if ($method === 'GET' && preg_match('#^/share/([a-f0-9]{64})$#', $path, $matches)) {
+        header('X-Robots-Tag: noindex, nofollow, noarchive');
+        $resume = ResumeShareRepository::findPublicByToken((string) $matches[1]);
+        if ($resume === null) {
+            http_response_code(404);
+            render('errors/404', ['title' => 'Link chia sẻ không còn hiệu lực']);
+            exit;
+        }
+        $sections = decode_sections((string) $resume['sections_json']);
+        require dirname(__DIR__) . '/views/resume/public-preview.php';
+        exit;
+    }
+
     if ($method === 'GET' && $path === '/') {
         if (Auth::check()) {
             redirect('/dashboard');
@@ -144,6 +157,20 @@ try {
         redirect('/resume/edit?id=' . $resumeId);
     }
 
+    if ($method === 'POST' && $path === '/resume/autosave') {
+        Csrf::verifyRequest();
+        $user = Auth::user();
+        if ($user === null) {
+            json_response(['ok' => false, 'message' => 'Phiên đăng nhập đã hết hạn.'], 401);
+        }
+        $resumeId = (int) ($_POST['id'] ?? 0);
+        ResumeRepository::update($resumeId, (int) $user['id'], $_POST, false);
+        json_response([
+            'ok' => true,
+            'saved_at' => gmdate('c'),
+        ]);
+    }
+
     if ($method === 'POST' && $path === '/resume/delete') {
         Csrf::verifyRequest();
         $user = Auth::requireUser();
@@ -166,6 +193,45 @@ try {
         $sections = decode_sections((string) $resume['sections_json']);
         require dirname(__DIR__) . '/views/resume/preview.php';
         exit;
+    }
+
+    if ($method === 'GET' && $path === '/resume/share') {
+        $user = Auth::requireUser();
+        $resumeId = (int) ($_GET['id'] ?? 0);
+        $resume = ResumeRepository::requireOwned($resumeId, (int) $user['id']);
+        $share = ResumeShareRepository::activeForResume($resumeId, (int) $user['id']);
+        $generatedUrl = (string) ($_SESSION['_generated_share_url'] ?? '');
+        unset($_SESSION['_generated_share_url']);
+        render('resume/share', [
+            'title' => 'Chia sẻ CV',
+            'user' => $user,
+            'resume' => $resume,
+            'share' => $share,
+            'generatedUrl' => $generatedUrl,
+        ]);
+        exit;
+    }
+
+    if ($method === 'POST' && $path === '/resume/share/create') {
+        Csrf::verifyRequest();
+        $user = Auth::requireUser();
+        $resumeId = (int) ($_POST['id'] ?? 0);
+        $_SESSION['_generated_share_url'] = ResumeShareRepository::create(
+            $resumeId,
+            (int) $user['id'],
+            (int) ($_POST['valid_days'] ?? 30)
+        );
+        flash('success', 'Đã tạo link chia sẻ mới. Hãy sao chép link trước khi rời trang.');
+        redirect('/resume/share?id=' . $resumeId);
+    }
+
+    if ($method === 'POST' && $path === '/resume/share/revoke') {
+        Csrf::verifyRequest();
+        $user = Auth::requireUser();
+        $resumeId = (int) ($_POST['id'] ?? 0);
+        ResumeShareRepository::revoke($resumeId, (int) $user['id']);
+        flash('success', 'Đã thu hồi link chia sẻ.');
+        redirect('/resume/share?id=' . $resumeId);
     }
 
     if ($method === 'GET' && $path === '/resume/export') {

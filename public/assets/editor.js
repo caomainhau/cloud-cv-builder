@@ -7,6 +7,8 @@
     const preview = document.getElementById('live-preview');
     const templateSelect = document.getElementById('template-select');
     const initialNode = document.getElementById('initial-sections');
+    const autosaveStatus = document.getElementById('autosave-status');
+    const previewLink = document.getElementById('preview-link');
 
     if (!form || !sectionsRoot || !sectionsJson || !preview || !initialNode) return;
 
@@ -70,6 +72,12 @@
 
     const blankSections = Object.fromEntries(Object.keys(definitions).map((key) => [key, []]));
     let sections;
+    let dirty = false;
+    let saving = false;
+    let autosaveTimer = null;
+    let manualSubmitting = false;
+    let dragState = null;
+
     try {
         sections = { ...blankSections, ...JSON.parse(initialNode.textContent || '{}') };
     } catch {
@@ -78,6 +86,7 @@
 
     for (const key of Object.keys(definitions)) {
         if (!Array.isArray(sections[key])) sections[key] = [];
+        sections[key] = sections[key].map((item) => ({ ...item, _visible: item?._visible !== false }));
     }
 
     const esc = (value) => String(value ?? '')
@@ -88,6 +97,7 @@
         .replaceAll("'", '&#039;');
 
     const nl2br = (value) => esc(value).replace(/\n/g, '<br>');
+    const visibleItems = (key) => sections[key].filter((item) => item._visible !== false);
 
     const fieldValue = (name) => {
         const field = form.elements.namedItem(name);
@@ -110,6 +120,66 @@
         sectionsJson.value = JSON.stringify(sections);
     };
 
+    const beforeUnloadHandler = (event) => {
+        if (!dirty && !saving) return;
+        event.preventDefault();
+        event.returnValue = true;
+    };
+
+    const setStatus = (message, state = 'idle') => {
+        if (!autosaveStatus) return;
+        autosaveStatus.textContent = message;
+        autosaveStatus.dataset.state = state;
+    };
+
+    const updateBeforeUnload = () => {
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+        if (!manualSubmitting && (dirty || saving)) {
+            window.addEventListener('beforeunload', beforeUnloadHandler);
+        }
+    };
+
+    const scheduleAutosave = () => {
+        window.clearTimeout(autosaveTimer);
+        autosaveTimer = window.setTimeout(runAutosave, 1100);
+    };
+
+    const markDirty = () => {
+        dirty = true;
+        setStatus('Có thay đổi chưa lưu', 'dirty');
+        updateBeforeUnload();
+        scheduleAutosave();
+    };
+
+    const runAutosave = async () => {
+        if (!dirty || saving || manualSubmitting) return;
+        dirty = false;
+        saving = true;
+        syncJson();
+        setStatus('Đang lưu tự động…', 'saving');
+        updateBeforeUnload();
+
+        try {
+            const response = await fetch('/resume/autosave', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form),
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const payload = await response.json();
+            if (!payload.ok) throw new Error(payload.message || 'Autosave failed');
+            setStatus(`Đã lưu tự động · ${new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`, 'saved');
+        } catch {
+            dirty = true;
+            setStatus('Chưa thể lưu tự động · bấm Lưu ngay', 'error');
+        } finally {
+            saving = false;
+            updateBeforeUnload();
+            if (dirty) scheduleAutosave();
+        }
+    };
+
     const renderInput = (sectionKey, itemIndex, [field, label, type, placeholder], value) => {
         const attrs = `data-section="${esc(sectionKey)}" data-index="${itemIndex}" data-field="${esc(field)}" placeholder="${esc(placeholder)}"`;
         if (type === 'textarea') {
@@ -122,8 +192,14 @@
         sectionsRoot.innerHTML = Object.entries(definitions).map(([sectionKey, definition]) => {
             const items = sections[sectionKey];
             const itemHtml = items.map((item, itemIndex) => `
-                <div class="dynamic-item">
-                    <button class="remove-item" type="button" data-remove="${esc(sectionKey)}" data-index="${itemIndex}">Xóa</button>
+                <div class="dynamic-item ${item._visible === false ? 'is-hidden' : ''}" data-section-item="${esc(sectionKey)}" data-index="${itemIndex}">
+                    <div class="dynamic-item-toolbar">
+                        <button class="drag-handle" type="button" draggable="true" data-drag-handle="${esc(sectionKey)}" data-index="${itemIndex}" title="Kéo để thay đổi thứ tự" aria-label="Kéo để thay đổi thứ tự">⋮⋮</button>
+                        <button class="item-tool" type="button" data-move="${esc(sectionKey)}" data-index="${itemIndex}" data-direction="-1" title="Đưa lên">↑</button>
+                        <button class="item-tool" type="button" data-move="${esc(sectionKey)}" data-index="${itemIndex}" data-direction="1" title="Đưa xuống">↓</button>
+                        <button class="item-tool" type="button" data-toggle-visible="${esc(sectionKey)}" data-index="${itemIndex}">${item._visible === false ? 'Hiện' : 'Ẩn'}</button>
+                        <button class="remove-item" type="button" data-remove="${esc(sectionKey)}" data-index="${itemIndex}">Xóa</button>
+                    </div>
                     ${definition.fields.map((field) => renderInput(sectionKey, itemIndex, field, item[field[0]] ?? '')).join('')}
                 </div>
             `).join('');
@@ -141,8 +217,7 @@
         syncJson();
     };
 
-    const listIsNotEmpty = (key) => sections[key].some((item) => Object.values(item).some((value) => String(value ?? '').trim()));
-
+    const listIsNotEmpty = (key) => visibleItems(key).some((item) => Object.entries(item).some(([field, value]) => field !== '_visible' && String(value ?? '').trim()));
     const entryHeader = (main, side) => `<div class="cv-entry-heading"><strong>${esc(main)}</strong>${side ? `<span>${esc(side)}</span>` : ''}</div>`;
 
     const renderPreview = () => {
@@ -165,7 +240,7 @@
         if (summary) html += `<section class="cv-section"><h2>Giới thiệu</h2><p>${nl2br(summary)}</p></section>`;
 
         if (listIsNotEmpty('experiences')) {
-            html += `<section class="cv-section"><h2>Kinh nghiệm</h2>${sections.experiences.map((item) => `
+            html += `<section class="cv-section"><h2>Kinh nghiệm</h2>${visibleItems('experiences').map((item) => `
                 <div class="cv-entry">
                     ${entryHeader(item.role, [item.start, item.end].filter(Boolean).join(' – '))}
                     ${item.company ? `<div class="cv-entry-subtitle">${esc(item.company)}</div>` : ''}
@@ -174,7 +249,7 @@
         }
 
         if (listIsNotEmpty('projects')) {
-            html += `<section class="cv-section"><h2>Dự án</h2>${sections.projects.map((item) => {
+            html += `<section class="cv-section"><h2>Dự án</h2>${visibleItems('projects').map((item) => {
                 const url = cleanUrl(item.url);
                 return `<div class="cv-entry">
                     <div class="cv-entry-heading"><strong>${esc(item.name)}</strong>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">Liên kết</a>` : ''}</div>
@@ -185,7 +260,7 @@
         }
 
         if (listIsNotEmpty('educations')) {
-            html += `<section class="cv-section"><h2>Học vấn</h2>${sections.educations.map((item) => `
+            html += `<section class="cv-section"><h2>Học vấn</h2>${visibleItems('educations').map((item) => `
                 <div class="cv-entry">
                     ${entryHeader(item.school, [item.start, item.end].filter(Boolean).join(' – '))}
                     ${item.degree ? `<div class="cv-entry-subtitle">${esc(item.degree)}</div>` : ''}
@@ -194,11 +269,11 @@
         }
 
         if (listIsNotEmpty('skills')) {
-            html += `<section class="cv-section"><h2>Kỹ năng</h2><p class="cv-tags">${sections.skills.filter((item) => item.name).map((item) => `<span>${esc(item.name)}</span>`).join('')}</p></section>`;
+            html += `<section class="cv-section"><h2>Kỹ năng</h2><p class="cv-tags">${visibleItems('skills').filter((item) => item.name).map((item) => `<span>${esc(item.name)}</span>`).join('')}</p></section>`;
         }
 
         if (listIsNotEmpty('certificates')) {
-            html += `<section class="cv-section"><h2>Chứng chỉ</h2>${sections.certificates.map((item) => `
+            html += `<section class="cv-section"><h2>Chứng chỉ</h2>${visibleItems('certificates').map((item) => `
                 <div class="cv-entry compact">
                     ${entryHeader(item.name, item.year)}
                     ${item.issuer ? `<div class="cv-entry-subtitle">${esc(item.issuer)}</div>` : ''}
@@ -206,11 +281,11 @@
         }
 
         if (listIsNotEmpty('languages')) {
-            html += `<section class="cv-section"><h2>Ngoại ngữ</h2><p class="cv-list-inline">${sections.languages.filter((item) => item.name).map((item) => `<span><strong>${esc(item.name)}</strong>${item.level ? `: ${esc(item.level)}` : ''}</span>`).join('')}</p></section>`;
+            html += `<section class="cv-section"><h2>Ngoại ngữ</h2><p class="cv-list-inline">${visibleItems('languages').filter((item) => item.name).map((item) => `<span><strong>${esc(item.name)}</strong>${item.level ? `: ${esc(item.level)}` : ''}</span>`).join('')}</p></section>`;
         }
 
         if (listIsNotEmpty('links')) {
-            html += `<section class="cv-section"><h2>Liên kết</h2><p class="cv-list-inline">${sections.links.map((item) => {
+            html += `<section class="cv-section"><h2>Liên kết</h2><p class="cv-list-inline">${visibleItems('links').map((item) => {
                 const url = cleanUrl(item.url);
                 return url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(item.label || url)}</a>` : '';
             }).join('')}</p></section>`;
@@ -219,15 +294,26 @@
         preview.innerHTML = html;
     };
 
+    const moveItem = (key, fromIndex, toIndex) => {
+        if (!definitions[key] || fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || toIndex >= sections[key].length) return;
+        const [item] = sections[key].splice(fromIndex, 1);
+        sections[key].splice(toIndex, 0, item);
+        renderEditors();
+        renderPreview();
+        markDirty();
+    };
+
     sectionsRoot.addEventListener('click', (event) => {
         const addButton = event.target.closest('[data-add]');
         if (addButton) {
             const key = addButton.dataset.add;
             if (!definitions[key]) return;
             const item = Object.fromEntries(definitions[key].fields.map(([field]) => [field, '']));
+            item._visible = true;
             sections[key].push(item);
             renderEditors();
             renderPreview();
+            markDirty();
             return;
         }
 
@@ -239,6 +325,28 @@
             sections[key].splice(index, 1);
             renderEditors();
             renderPreview();
+            markDirty();
+            return;
+        }
+
+        const visibilityButton = event.target.closest('[data-toggle-visible]');
+        if (visibilityButton) {
+            const key = visibilityButton.dataset.toggleVisible;
+            const index = Number(visibilityButton.dataset.index);
+            if (!sections[key]?.[index]) return;
+            sections[key][index]._visible = sections[key][index]._visible === false;
+            renderEditors();
+            renderPreview();
+            markDirty();
+            return;
+        }
+
+        const moveButton = event.target.closest('[data-move]');
+        if (moveButton) {
+            const key = moveButton.dataset.move;
+            const index = Number(moveButton.dataset.index);
+            const direction = Number(moveButton.dataset.direction);
+            moveItem(key, index, index + direction);
         }
     });
 
@@ -248,16 +356,89 @@
         const key = element.dataset.section;
         const index = Number(element.dataset.index);
         const field = element.dataset.field;
-        if (!sections[key] || !sections[key][index]) return;
+        if (!sections[key]?.[index]) return;
         sections[key][index][field] = element.value;
         renderPreview();
+        markDirty();
+    });
+
+    sectionsRoot.addEventListener('dragstart', (event) => {
+        const handle = event.target.closest('[data-drag-handle]');
+        if (!handle) return;
+        dragState = { key: handle.dataset.dragHandle, index: Number(handle.dataset.index) };
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', `${dragState.key}:${dragState.index}`);
+        handle.closest('.dynamic-item')?.classList.add('is-dragging');
+    });
+
+    sectionsRoot.addEventListener('dragover', (event) => {
+        const target = event.target.closest('[data-section-item]');
+        if (!target || !dragState || target.dataset.sectionItem !== dragState.key) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    });
+
+    sectionsRoot.addEventListener('drop', (event) => {
+        const target = event.target.closest('[data-section-item]');
+        if (!target || !dragState || target.dataset.sectionItem !== dragState.key) return;
+        event.preventDefault();
+        const targetIndex = Number(target.dataset.index);
+        moveItem(dragState.key, dragState.index, targetIndex);
+        dragState = null;
+    });
+
+    sectionsRoot.addEventListener('dragend', () => {
+        dragState = null;
+        document.querySelectorAll('.is-dragging').forEach((item) => item.classList.remove('is-dragging'));
     });
 
     form.addEventListener('input', (event) => {
-        if (!event.target.closest('[data-section]')) renderPreview();
+        if (!event.target.closest('[data-section]')) {
+            renderPreview();
+            markDirty();
+        }
     });
-    form.addEventListener('change', renderPreview);
-    form.addEventListener('submit', syncJson);
+
+    form.addEventListener('change', (event) => {
+        if (!event.target.closest('[data-section]')) {
+            renderPreview();
+            markDirty();
+        }
+    });
+
+    const waitForSaved = async () => {
+        if (dirty && !saving) await runAutosave();
+        while (saving) {
+            await new Promise((resolve) => window.setTimeout(resolve, 100));
+        }
+        if (dirty) await runAutosave();
+        return !dirty && !saving;
+    };
+
+    previewLink?.addEventListener('click', async (event) => {
+        if (!dirty && !saving) return;
+        event.preventDefault();
+        const opened = await waitForSaved();
+        if (opened) {
+            window.open(previewLink.href, '_blank', 'noopener');
+        } else {
+            setStatus('Chưa thể mở bản in · hãy bấm Lưu ngay', 'error');
+        }
+    });
+
+    form.addEventListener('submit', (event) => {
+        if (saving) {
+            event.preventDefault();
+            setStatus('Đang hoàn tất lưu tự động…', 'saving');
+            window.setTimeout(() => form.requestSubmit(), 180);
+            return;
+        }
+        manualSubmitting = true;
+        window.clearTimeout(autosaveTimer);
+        syncJson();
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+        setStatus('Đang lưu…', 'saving');
+    });
 
     renderEditors();
     renderPreview();

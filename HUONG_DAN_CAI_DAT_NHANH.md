@@ -1,4 +1,4 @@
-# Hướng dẫn cài nhanh CloudCV Builder MVP
+# Hướng dẫn cài nhanh CloudCV Builder v1.2 UX Release
 
 ## A. Chạy thử trên máy Windows bằng Docker Desktop
 
@@ -34,7 +34,7 @@ docker compose down
 ```powershell
 git init
 git add .
-git commit -m "Initial CloudCV Builder MVP"
+git commit -m "Initial CloudCV Builder v1.2 UX Release"
 git branch -M main
 git remote add origin <DIA_CHI_REPOSITORY_GITHUB>
 git push -u origin main
@@ -56,7 +56,7 @@ git push -u origin main
 ## D. Lưu CV thành PDF
 
 1. Mở một CV.
-2. Bấm **Lưu CV**.
+2. Chờ trạng thái **Đã lưu tự động** hoặc bấm **Lưu ngay**.
 3. Bấm **Mở bản in**.
 4. Bấm **In hoặc lưu PDF**.
 5. Trong Chrome hoặc Edge, chọn máy in **Save as PDF**.
@@ -69,13 +69,11 @@ git push -u origin main
 - CV trên cloud được lưu trong Render Postgres.
 - Free Render Postgres chỉ phù hợp để học và demo; cần chú ý thời hạn database và chủ động backup dữ liệu cần giữ.
 
-## Nâng cấp lên v1.1
+## Nâng cấp từ phiên bản cũ
 
-1. Sao lưu database trước khi deploy lại.
-2. Thay source code bằng bản v1.1.
-3. Chạy `git add .`, commit và push lên GitHub.
-4. Render tự deploy và tự tạo hai bảng mới: `activity_logs`, `login_attempts`.
-5. Kiểm tra `/health`, đăng nhập, xuất JSON, nhập JSON và trang `/account`.
+- Từ v1.1 lên v1.2: đọc `HUONG_DAN_NANG_CAP_V1.2.md`.
+- Sau khi deploy, chạy `TEST_CHECKLIST_V1.2.md`.
+- Migration v1.2 chỉ tạo thêm bảng `resume_shares`; dữ liệu tài khoản và CV cũ được giữ nguyên.
 
 Chạy local không dùng Docker:
 

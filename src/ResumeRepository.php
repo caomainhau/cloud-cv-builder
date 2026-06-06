@@ -40,7 +40,7 @@ final class ResumeRepository
         return $resumeId;
     }
 
-    public static function update(int $resumeId, int $userId, array $input): void
+    public static function update(int $resumeId, int $userId, array $input, bool $logActivity = true): void
     {
         self::requireOwned($resumeId, $userId);
         $data = self::normalizeResumeInput($input);
@@ -65,7 +65,9 @@ SQL);
             ...$data,
             'updated_at' => now_string(),
         ]);
-        ActivityLogger::log('resume.update', $userId, 'success', ['resume_id' => $resumeId]);
+        if ($logActivity) {
+            ActivityLogger::log('resume.update', $userId, 'success', ['resume_id' => $resumeId]);
+        }
     }
 
     public static function delete(int $resumeId, int $userId): void
@@ -169,7 +171,11 @@ SQL);
                 foreach ($fields as $field => $maxLength) {
                     $row[$field] = mb_substr(trim((string) ($item[$field] ?? '')), 0, $maxLength);
                 }
-                if (implode('', $row) !== '') {
+                $visible = filter_var($item['_visible'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                $row['_visible'] = $visible ?? true;
+                $content = $row;
+                unset($content['_visible']);
+                if (implode('', $content) !== '') {
                     $clean[$section][] = $row;
                 }
             }

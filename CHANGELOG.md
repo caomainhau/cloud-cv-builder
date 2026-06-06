@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.2.0 UX Release
+
+- Thêm autosave cho trang chỉnh sửa CV với debounce phía trình duyệt.
+- Thêm trạng thái lưu: chưa lưu, đang lưu, đã lưu và lỗi lưu tự động.
+- Chỉ cảnh báo khi rời trang nếu vẫn còn thay đổi chưa được lưu.
+- Khi bấm mở bản in, editor chờ autosave hoàn tất để giảm nguy cơ xem bản cũ.
+- Thêm kéo thả thứ tự các dòng trong từng nhóm nội dung.
+- Thêm nút lên/xuống để đổi thứ tự trên thiết bị không thuận tiện kéo thả.
+- Thêm ẩn/hiện từng dòng mà không xóa dữ liệu.
+- Thêm link chia sẻ CV công khai bằng token ngẫu nhiên.
+- Chỉ lưu SHA-256 hash của token chia sẻ trong database.
+- Cho phép đặt thời hạn link: 7, 30, 90 ngày hoặc không hết hạn.
+- Link mới tự động thu hồi link cũ của cùng CV.
+- Thêm thu hồi link thủ công, thống kê lượt xem và thời điểm xem gần nhất.
+- Thêm bảng `resume_shares` bằng migration tương thích ngược.
+- Ghi activity log khi tạo hoặc thu hồi link chia sẻ.
+
 ## v1.1.0 Safe Release
 
 - Thêm xuất CV thành file JSON backup.

@@ -37,7 +37,7 @@
 </main>
 
 <footer class="site-footer no-print">
-    <div class="container">CloudCV Builder · v1.1 Safe Release dành cho nhóm bạn và portfolio cá nhân.</div>
+    <div class="container">CloudCV Builder · v1.2 UX Release dành cho nhóm bạn và portfolio cá nhân.</div>
 </footer>
 </body>
 </html>

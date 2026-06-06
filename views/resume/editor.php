@@ -10,8 +10,9 @@
                 <strong><?= e($resume['title']) ?></strong>
             </div>
             <div class="toolbar-actions">
-                <a class="button button-secondary button-small" href="/resume/preview?id=<?= (int) $resume['id'] ?>" target="_blank" rel="noopener">Mở bản in</a>
-                <button class="button button-small" type="submit">Lưu CV</button>
+                <span id="autosave-status" class="autosave-status" aria-live="polite">Đã tải dữ liệu</span>
+                <a id="preview-link" class="button button-secondary button-small" href="/resume/preview?id=<?= (int) $resume['id'] ?>" target="_blank" rel="noopener">Mở bản in</a>
+                <button class="button button-small" type="submit">Lưu ngay</button>
             </div>
         </div>
 

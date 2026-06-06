@@ -6,6 +6,10 @@ $contactParts = array_values(array_filter([
     trim((string) $resume['phone']),
     trim((string) $resume['location']),
 ]));
+$visibleSections = [];
+foreach ($sections as $sectionKey => $items) {
+    $visibleSections[$sectionKey] = visible_items(is_array($items) ? $items : []);
+}
 ?>
 <header class="cv-header">
     <h1><?= e($fullName) ?></h1>
@@ -20,10 +24,10 @@ $contactParts = array_values(array_filter([
 </section>
 <?php endif; ?>
 
-<?php if (($sections['experiences'] ?? []) !== []): ?>
+<?php if (($visibleSections['experiences'] ?? []) !== []): ?>
 <section class="cv-section">
     <h2>Kinh nghiệm</h2>
-    <?php foreach ($sections['experiences'] as $item): ?>
+    <?php foreach ($visibleSections['experiences'] as $item): ?>
         <div class="cv-entry">
             <div class="cv-entry-heading">
                 <strong><?= e($item['role'] ?? '') ?></strong>
@@ -36,10 +40,10 @@ $contactParts = array_values(array_filter([
 </section>
 <?php endif; ?>
 
-<?php if (($sections['projects'] ?? []) !== []): ?>
+<?php if (($visibleSections['projects'] ?? []) !== []): ?>
 <section class="cv-section">
     <h2>Dự án</h2>
-    <?php foreach ($sections['projects'] as $item): ?>
+    <?php foreach ($visibleSections['projects'] as $item): ?>
         <div class="cv-entry">
             <div class="cv-entry-heading">
                 <strong><?= e($item['name'] ?? '') ?></strong>
@@ -53,10 +57,10 @@ $contactParts = array_values(array_filter([
 </section>
 <?php endif; ?>
 
-<?php if (($sections['educations'] ?? []) !== []): ?>
+<?php if (($visibleSections['educations'] ?? []) !== []): ?>
 <section class="cv-section">
     <h2>Học vấn</h2>
-    <?php foreach ($sections['educations'] as $item): ?>
+    <?php foreach ($visibleSections['educations'] as $item): ?>
         <div class="cv-entry">
             <div class="cv-entry-heading">
                 <strong><?= e($item['school'] ?? '') ?></strong>
@@ -69,21 +73,21 @@ $contactParts = array_values(array_filter([
 </section>
 <?php endif; ?>
 
-<?php if (($sections['skills'] ?? []) !== []): ?>
+<?php if (($visibleSections['skills'] ?? []) !== []): ?>
 <section class="cv-section">
     <h2>Kỹ năng</h2>
     <p class="cv-tags">
-        <?php foreach ($sections['skills'] as $item): ?>
+        <?php foreach ($visibleSections['skills'] as $item): ?>
             <?php if (($item['name'] ?? '') !== ''): ?><span><?= e($item['name']) ?></span><?php endif; ?>
         <?php endforeach; ?>
     </p>
 </section>
 <?php endif; ?>
 
-<?php if (($sections['certificates'] ?? []) !== []): ?>
+<?php if (($visibleSections['certificates'] ?? []) !== []): ?>
 <section class="cv-section">
     <h2>Chứng chỉ</h2>
-    <?php foreach ($sections['certificates'] as $item): ?>
+    <?php foreach ($visibleSections['certificates'] as $item): ?>
         <div class="cv-entry compact">
             <div class="cv-entry-heading">
                 <strong><?= e($item['name'] ?? '') ?></strong>
@@ -95,22 +99,22 @@ $contactParts = array_values(array_filter([
 </section>
 <?php endif; ?>
 
-<?php if (($sections['languages'] ?? []) !== []): ?>
+<?php if (($visibleSections['languages'] ?? []) !== []): ?>
 <section class="cv-section">
     <h2>Ngoại ngữ</h2>
     <p class="cv-list-inline">
-        <?php foreach ($sections['languages'] as $item): ?>
+        <?php foreach ($visibleSections['languages'] as $item): ?>
             <?php if (($item['name'] ?? '') !== ''): ?><span><strong><?= e($item['name']) ?></strong><?= ($item['level'] ?? '') !== '' ? ': ' . e($item['level']) : '' ?></span><?php endif; ?>
         <?php endforeach; ?>
     </p>
 </section>
 <?php endif; ?>
 
-<?php if (($sections['links'] ?? []) !== []): ?>
+<?php if (($visibleSections['links'] ?? []) !== []): ?>
 <section class="cv-section">
     <h2>Liên kết</h2>
     <p class="cv-list-inline">
-        <?php foreach ($sections['links'] as $item): ?>
+        <?php foreach ($visibleSections['links'] as $item): ?>
             <?php $linkUrl = safe_url($item['url'] ?? ''); ?>
             <?php if ($linkUrl !== ''): ?><a href="<?= e($linkUrl) ?>" target="_blank" rel="noopener"><?= e(($item['label'] ?? '') !== '' ? $item['label'] : $linkUrl) ?></a><?php endif; ?>
         <?php endforeach; ?>

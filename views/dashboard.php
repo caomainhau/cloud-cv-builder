@@ -41,6 +41,7 @@
                         <div class="card-actions">
                             <a class="button button-small" href="/resume/edit?id=<?= (int) $resume['id'] ?>">Chỉnh sửa</a>
                             <a class="button button-secondary button-small" href="/resume/preview?id=<?= (int) $resume['id'] ?>" target="_blank" rel="noopener">Xem PDF</a>
+                            <a class="link-button" href="/resume/share?id=<?= (int) $resume['id'] ?>">Chia sẻ</a>
                             <a class="link-button" href="/resume/export?id=<?= (int) $resume['id'] ?>">Xuất JSON</a>
                             <form method="post" action="/resume/clone" class="inline-form">
                                 <?= Csrf::field() ?>

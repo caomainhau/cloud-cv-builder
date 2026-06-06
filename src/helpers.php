@@ -93,6 +93,36 @@ function render(string $view, array $data = []): void
     require dirname(__DIR__) . '/views/layout.php';
 }
 
+
+function json_response(array $payload, int $status = 200): never
+{
+    http_response_code($status);
+    header('Content-Type: application/json; charset=UTF-8');
+    header('Cache-Control: no-store');
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function app_url(): string
+{
+    $configured = trim((string) env_value('APP_URL', ''));
+    if ($configured !== '' && filter_var($configured, FILTER_VALIDATE_URL)) {
+        return rtrim($configured, '/');
+    }
+
+    $host = trim((string) ($_SERVER['HTTP_HOST'] ?? 'localhost:8080'));
+    if (!preg_match('/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i', $host)) {
+        $host = 'localhost:8080';
+    }
+
+    return (is_https_request() ? 'https://' : 'http://') . $host;
+}
+
+function visible_items(array $items): array
+{
+    return array_values(array_filter($items, static fn ($item): bool => is_array($item) && ($item['_visible'] ?? true) !== false));
+}
+
 function app_name(): string
 {
     return env_value('APP_NAME', 'CloudCV Builder') ?? 'CloudCV Builder';
@@ -210,5 +240,7 @@ function activity_label(string $action): string
         'resume.export' => 'Xuất CV thành JSON',
         'resume.import' => 'Nhập CV từ JSON',
         'authorization.denied' => 'Từ chối truy cập CV',
+        'resume.share.created' => 'Tạo link chia sẻ CV',
+        'resume.share.revoked' => 'Thu hồi link chia sẻ CV',
     ][$action] ?? $action;
 }
