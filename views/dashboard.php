@@ -13,6 +13,16 @@
             </form>
         </div>
 
+        <details class="import-panel">
+            <summary>Nhập CV từ file JSON backup</summary>
+            <form method="post" action="/resume/import" enctype="multipart/form-data" class="import-form">
+                <?= Csrf::field() ?>
+                <input type="file" name="resume_json" accept="application/json,.json" required>
+                <button class="button button-secondary button-small" type="submit">Nhập JSON</button>
+            </form>
+            <p class="muted small">Chỉ dùng file JSON được xuất từ CloudCV Builder. Giới hạn 512 KB.</p>
+        </details>
+
         <?php if ($resumes === []): ?>
             <div class="empty-state">
                 <h2>Bạn chưa có CV nào</h2>
@@ -31,6 +41,7 @@
                         <div class="card-actions">
                             <a class="button button-small" href="/resume/edit?id=<?= (int) $resume['id'] ?>">Chỉnh sửa</a>
                             <a class="button button-secondary button-small" href="/resume/preview?id=<?= (int) $resume['id'] ?>" target="_blank" rel="noopener">Xem PDF</a>
+                            <a class="link-button" href="/resume/export?id=<?= (int) $resume['id'] ?>">Xuất JSON</a>
                             <form method="post" action="/resume/clone" class="inline-form">
                                 <?= Csrf::field() ?>
                                 <input type="hidden" name="id" value="<?= (int) $resume['id'] ?>">

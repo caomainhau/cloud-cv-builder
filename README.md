@@ -303,3 +303,31 @@ Các giới hạn này là chủ ý để giữ phạm vi MVP nhỏ, dễ cài v
 6. Chuyển sang Laravel hoặc bổ sung framework khi hệ thống lớn hơn.
 7. Thêm email verification và chức năng quên mật khẩu.
 8. Thêm AI gợi ý mô tả dự án sau cùng.
+
+---
+
+# 6. Nâng cấp v1.1 Safe Release
+
+Phiên bản v1.1 bổ sung backup JSON, import JSON, đổi mật khẩu, activity log và rate limit đăng nhập lưu trong database. Migration chạy tự động khi container khởi động và chỉ tạo thêm bảng mới, không xóa dữ liệu `users` hoặc `resumes` hiện có.
+
+Sau khi thay source code và push lên GitHub, Render sẽ tự deploy lại. Kiểm tra:
+
+```text
+/health
+/account
+/dashboard
+```
+
+Chạy local trực tiếp bằng PHP:
+
+```powershell
+php scripts/migrate.php
+php -S localhost:8080 -t public public/router.php
+```
+
+Các bảng mới:
+
+```text
+activity_logs
+login_attempts
+```

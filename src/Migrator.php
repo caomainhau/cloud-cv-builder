@@ -37,6 +37,32 @@ CREATE TABLE IF NOT EXISTS resumes (
     updated_at TIMESTAMP NOT NULL
 )
 SQL);
+
+            $pdo->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NULL REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(120) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'success',
+    ip_address VARCHAR(64) NOT NULL DEFAULT '',
+    user_agent VARCHAR(500) NOT NULL DEFAULT '',
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at TIMESTAMP NOT NULL
+)
+SQL);
+
+            $pdo->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id SERIAL PRIMARY KEY,
+    email_hash VARCHAR(64) NOT NULL,
+    ip_address VARCHAR(64) NOT NULL,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    window_started_at TIMESTAMP NOT NULL,
+    blocked_until TIMESTAMP NULL,
+    updated_at TIMESTAMP NOT NULL,
+    UNIQUE(email_hash, ip_address)
+)
+SQL);
         } else {
             $pdo->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS users (
@@ -67,8 +93,38 @@ CREATE TABLE IF NOT EXISTS resumes (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 )
 SQL);
+
+            $pdo->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NULL,
+    action TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'success',
+    ip_address TEXT NOT NULL DEFAULT '',
+    user_agent TEXT NOT NULL DEFAULT '',
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+)
+SQL);
+
+            $pdo->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email_hash TEXT NOT NULL,
+    ip_address TEXT NOT NULL,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    window_started_at TEXT NOT NULL,
+    blocked_until TEXT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE(email_hash, ip_address)
+)
+SQL);
         }
 
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON resumes(user_id)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_login_attempts_updated_at ON login_attempts(updated_at)');
     }
 }

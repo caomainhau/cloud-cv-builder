@@ -68,3 +68,18 @@ git push -u origin main
 - Không lưu ảnh hoặc database SQLite bên trong Web Service.
 - CV trên cloud được lưu trong Render Postgres.
 - Free Render Postgres chỉ phù hợp để học và demo; cần chú ý thời hạn database và chủ động backup dữ liệu cần giữ.
+
+## Nâng cấp lên v1.1
+
+1. Sao lưu database trước khi deploy lại.
+2. Thay source code bằng bản v1.1.
+3. Chạy `git add .`, commit và push lên GitHub.
+4. Render tự deploy và tự tạo hai bảng mới: `activity_logs`, `login_attempts`.
+5. Kiểm tra `/health`, đăng nhập, xuất JSON, nhập JSON và trang `/account`.
+
+Chạy local không dùng Docker:
+
+```powershell
+php scripts/migrate.php
+php -S localhost:8080 -t public public/router.php
+```

@@ -19,3 +19,11 @@ Trước khi dùng như một dịch vụ thật:
 - Thiết lập backup database.
 - Thực hiện kiểm thử bảo mật và dependency review định kỳ.
 - Chuyển sang một session store bền vững nếu scale nhiều instance.
+
+## Bổ sung trong v1.1
+
+- Rate limit đăng nhập được lưu trong database theo email hash và IP; tối đa 5 lần sai trong 15 phút.
+- Activity log ghi lại các thao tác quan trọng nhưng không lưu mật khẩu hoặc nội dung CV.
+- Export JSON yêu cầu đăng nhập và quyền sở hữu CV.
+- Import JSON giới hạn 512 KB, chỉ nhận `.json`, kiểm tra schema và lọc lại dữ liệu trước khi lưu.
+- HSTS được bật khi chạy production qua HTTPS.

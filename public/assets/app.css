@@ -189,3 +189,24 @@ small, .small { font-size: 12px; }
     .preview-stage { display: none; }
     .editor-grid { min-height: auto; }
 }
+
+.import-panel { margin: 0 0 20px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+.import-panel summary { cursor: pointer; color: var(--brand-dark); font-weight: 800; }
+.import-form { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.import-form input { margin: 0; }
+.account-grid { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(0, 1.2fr); gap: 20px; }
+.account-card { padding: 18px; }
+.account-card h2 { margin-top: 0; }
+.activity-list { display: grid; gap: 10px; margin-top: 14px; }
+.activity-item { display: flex; justify-content: space-between; gap: 14px; padding: 11px 0; border-top: 1px solid var(--line); }
+.activity-meta { display: grid; justify-items: end; gap: 5px; }
+.status-pill { display: inline-flex; padding: 3px 7px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.status-success { color: #065f46; background: #d1fae5; }
+.status-failed, .status-denied { color: #991b1b; background: #fee2e2; }
+.status-blocked { color: #854d0e; background: #fef3c7; }
+@media (max-width: 760px) {
+    .account-grid { grid-template-columns: 1fr; }
+    .import-form { align-items: stretch; flex-direction: column; }
+    .activity-item { align-items: flex-start; flex-direction: column; }
+    .activity-meta { justify-items: start; }
+}

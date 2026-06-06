@@ -66,7 +66,7 @@ try {
             flash('success', 'Đăng nhập thành công.');
             redirect('/dashboard');
         }
-        render('auth/login', ['title' => 'Đăng nhập', 'errors' => ['Email hoặc mật khẩu chưa đúng.']]);
+        render('auth/login', ['title' => 'Đăng nhập', 'errors' => [Auth::lastLoginError()]]);
         exit;
     }
 
@@ -81,6 +81,38 @@ try {
         $resumes = ResumeRepository::allForUser((int) $user['id']);
         render('dashboard', ['title' => 'CV của tôi', 'user' => $user, 'resumes' => $resumes]);
         exit;
+    }
+
+    if ($method === 'GET' && $path === '/account') {
+        $user = Auth::requireUser();
+        render('account', [
+            'title' => 'Tài khoản',
+            'user' => $user,
+            'activities' => ActivityLogger::recentForUser((int) $user['id']),
+        ]);
+        exit;
+    }
+
+    if ($method === 'POST' && $path === '/account/password') {
+        Csrf::verifyRequest();
+        $user = Auth::requireUser();
+        $errors = Auth::changePassword(
+            (int) $user['id'],
+            (string) ($_POST['current_password'] ?? ''),
+            (string) ($_POST['new_password'] ?? ''),
+            (string) ($_POST['new_password_confirmation'] ?? '')
+        );
+        if ($errors !== []) {
+            render('account', [
+                'title' => 'Tài khoản',
+                'user' => $user,
+                'activities' => ActivityLogger::recentForUser((int) $user['id']),
+                'errors' => $errors,
+            ]);
+            exit;
+        }
+        flash('success', 'Đã đổi mật khẩu.');
+        redirect('/account');
     }
 
     if ($method === 'POST' && $path === '/resume/create') {
@@ -134,6 +166,53 @@ try {
         $sections = decode_sections((string) $resume['sections_json']);
         require dirname(__DIR__) . '/views/resume/preview.php';
         exit;
+    }
+
+    if ($method === 'GET' && $path === '/resume/export') {
+        $user = Auth::requireUser();
+        $payload = ResumeRepository::exportData((int) ($_GET['id'] ?? 0), (int) $user['id']);
+        $filename = slug_filename((string) ($payload['resume']['title'] ?? 'cv')) . '-' . gmdate('Y-m-d') . '.json';
+        header('Content-Type: application/json; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-store');
+        echo json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
+    if ($method === 'POST' && $path === '/resume/import') {
+        Csrf::verifyRequest();
+        $user = Auth::requireUser();
+        $file = $_FILES['resume_json'] ?? null;
+        if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            flash('error', 'Hãy chọn một file JSON đã xuất từ CloudCV Builder.');
+            redirect('/dashboard');
+        }
+        if ((int) ($file['size'] ?? 0) <= 0 || (int) $file['size'] > 524288) {
+            flash('error', 'File JSON không hợp lệ hoặc vượt quá giới hạn 512 KB.');
+            redirect('/dashboard');
+        }
+        if (strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION)) !== 'json') {
+            flash('error', 'Chỉ chấp nhận file có phần mở rộng .json.');
+            redirect('/dashboard');
+        }
+
+        $contents = file_get_contents((string) $file['tmp_name']);
+        if ($contents === false) {
+            flash('error', 'Không thể đọc file JSON.');
+            redirect('/dashboard');
+        }
+        try {
+            $payload = json_decode($contents, true, 128, JSON_THROW_ON_ERROR);
+            if (!is_array($payload)) {
+                throw new InvalidArgumentException('File JSON không hợp lệ.');
+            }
+            $resumeId = ResumeRepository::importData((int) $user['id'], $payload);
+            flash('success', 'Đã nhập một bản CV mới từ file JSON.');
+            redirect('/resume/edit?id=' . $resumeId);
+        } catch (JsonException | InvalidArgumentException $exception) {
+            flash('error', $exception->getMessage());
+            redirect('/dashboard');
+        }
     }
 
     http_response_code(404);

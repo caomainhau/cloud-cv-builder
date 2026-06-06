@@ -14,6 +14,7 @@
         <nav class="nav">
             <?php if (Auth::check()): ?>
                 <a href="/dashboard">CV của tôi</a>
+                <a href="/account">Tài khoản</a>
                 <form method="post" action="/logout" class="inline-form">
                     <?= Csrf::field() ?>
                     <button class="link-button" type="submit">Đăng xuất</button>
@@ -36,7 +37,7 @@
 </main>
 
 <footer class="site-footer no-print">
-    <div class="container">CloudCV Builder · MVP dành cho nhóm bạn và portfolio cá nhân.</div>
+    <div class="container">CloudCV Builder · v1.1 Safe Release dành cho nhóm bạn và portfolio cá nhân.</div>
 </footer>
 </body>
 </html>

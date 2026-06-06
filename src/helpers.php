@@ -152,3 +152,63 @@ function is_https_request(): bool
     $forwarded = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
     return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $forwarded === 'https';
 }
+
+function env_bool(string $key, bool $default = false): bool
+{
+    $value = env_value($key);
+    if ($value === null) {
+        return $default;
+    }
+
+    return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $default;
+}
+
+function client_ip(): string
+{
+    $candidates = [];
+    if (env_bool('TRUST_PROXY_HEADERS', false)) {
+        $forwarded = (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
+        if ($forwarded !== '') {
+            $candidates[] = trim(explode(',', $forwarded)[0]);
+        }
+        $candidates[] = trim((string) ($_SERVER['HTTP_X_REAL_IP'] ?? ''));
+    }
+    $candidates[] = trim((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+
+    foreach ($candidates as $candidate) {
+        if ($candidate !== '' && filter_var($candidate, FILTER_VALIDATE_IP)) {
+            return $candidate;
+        }
+    }
+
+    return 'unknown';
+}
+
+function slug_filename(string $value, string $fallback = 'cv'): string
+{
+    $value = mb_strtolower(trim($value));
+    $value = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value) ?: $value;
+    $value = preg_replace('/[^a-z0-9]+/i', '-', $value) ?? '';
+    $value = trim($value, '-');
+    return $value !== '' ? mb_substr($value, 0, 80) : $fallback;
+}
+
+function activity_label(string $action): string
+{
+    return [
+        'account.register' => 'Tạo tài khoản',
+        'auth.login.success' => 'Đăng nhập thành công',
+        'auth.login.failed' => 'Đăng nhập thất bại',
+        'auth.login.blocked' => 'Đăng nhập bị tạm khóa',
+        'auth.logout' => 'Đăng xuất',
+        'account.password.changed' => 'Đổi mật khẩu',
+        'account.password.failed' => 'Đổi mật khẩu thất bại',
+        'resume.create' => 'Tạo CV',
+        'resume.update' => 'Cập nhật CV',
+        'resume.clone' => 'Sao chép CV',
+        'resume.delete' => 'Xóa CV',
+        'resume.export' => 'Xuất CV thành JSON',
+        'resume.import' => 'Nhập CV từ JSON',
+        'authorization.denied' => 'Từ chối truy cập CV',
+    ][$action] ?? $action;
+}
