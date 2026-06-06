@@ -1,0 +1,5 @@
+.git
+.env
+storage/*.sqlite
+storage/*.sqlite-*
+README.md

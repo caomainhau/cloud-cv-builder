@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cloudcv
+      POSTGRES_USER: cloudcv
+      POSTGRES_PASSWORD: cloudcv_dev_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cloudcv -d cloudcv"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    environment:
+      APP_NAME: CloudCV Builder
+      APP_ENV: local
+      APP_URL: http://localhost:8080
+      SESSION_NAME: cloudcv_session
+      PORT: 8080
+      DATABASE_URL: postgresql://cloudcv:cloudcv_dev_password@db:5432/cloudcv
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
