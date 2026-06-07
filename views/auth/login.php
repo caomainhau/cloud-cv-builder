@@ -9,6 +9,7 @@
         <label>Email<input type="email" name="email" required autocomplete="email"></label>
         <label>Mật khẩu<input type="password" name="password" required autocomplete="current-password"></label>
         <button class="button button-full" type="submit">Đăng nhập</button>
+        <p class="auth-note"><a href="/forgot-password">Quên mật khẩu?</a></p>
         <p class="auth-note">Chưa có tài khoản? <a href="/register">Đăng ký tại đây</a>.</p>
     </form>
 </section>

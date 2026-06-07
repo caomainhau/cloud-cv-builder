@@ -10,6 +10,9 @@
         <label>Email<input type="email" name="email" value="<?= old_input('email') ?>" required maxlength="190" autocomplete="email"></label>
         <label>Mật khẩu<input type="password" name="password" required minlength="8" autocomplete="new-password"><small>Tối thiểu 8 ký tự.</small></label>
         <button class="button button-full" type="submit">Đăng ký</button>
+        <?php if (Auth::emailVerificationRequired()): ?>
+            <p class="auth-note">Sau khi đăng ký, bạn cần mở email để xác minh tài khoản.</p>
+        <?php endif; ?>
         <p class="auth-note">Đã có tài khoản? <a href="/login">Đăng nhập</a>.</p>
     </form>
 </section>

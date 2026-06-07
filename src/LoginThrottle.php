@@ -78,6 +78,12 @@ SQL);
         ]);
     }
 
+    public static function clearAllForEmail(string $email): void
+    {
+        $stmt = Database::connection()->prepare('DELETE FROM login_attempts WHERE email_hash = :email_hash');
+        $stmt->execute(['email_hash' => self::emailHash($email)]);
+    }
+
     private static function find(string $email, string $ipAddress): ?array
     {
         return self::findByKey(self::emailHash($email), $ipAddress);

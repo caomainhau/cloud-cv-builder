@@ -242,5 +242,14 @@ function activity_label(string $action): string
         'authorization.denied' => 'Từ chối truy cập CV',
         'resume.share.created' => 'Tạo link chia sẻ CV',
         'resume.share.revoked' => 'Thu hồi link chia sẻ CV',
+        'account.profile.updated' => 'Cập nhật hồ sơ tài khoản',
+        'account.data.exported' => 'Tải toàn bộ dữ liệu cá nhân',
+        'account.delete.failed' => 'Xóa tài khoản thất bại',
+        'account.email.verification.sent' => 'Gửi email xác minh',
+        'account.email.verification.blocked' => 'Tạm khóa yêu cầu email xác minh',
+        'account.email.verified' => 'Xác minh email thành công',
+        'account.password.reset.requested' => 'Yêu cầu đặt lại mật khẩu',
+        'account.password.reset.blocked' => 'Tạm khóa yêu cầu đặt lại mật khẩu',
+        'account.password.reset.completed' => 'Đặt lại mật khẩu thành công',
     ][$action] ?? $action;
 }

@@ -13,7 +13,11 @@
         <a class="brand" href="/">Cloud<span>CV</span></a>
         <nav class="nav">
             <?php if (Auth::check()): ?>
-                <a href="/dashboard">CV của tôi</a>
+                <?php if (!Auth::emailVerificationRequired() || Auth::isVerified()): ?>
+                    <a href="/dashboard">CV của tôi</a>
+                <?php else: ?>
+                    <a href="/verify-email">Xác minh email</a>
+                <?php endif; ?>
                 <a href="/account">Tài khoản</a>
                 <form method="post" action="/logout" class="inline-form">
                     <?= Csrf::field() ?>
@@ -37,7 +41,7 @@
 </main>
 
 <footer class="site-footer no-print">
-    <div class="container">CloudCV Builder · v1.2 UX Release dành cho nhóm bạn và portfolio cá nhân.</div>
+    <div class="container">CloudCV Builder · v1.3 Account Recovery Release dành cho nhóm bạn và portfolio cá nhân.</div>
 </footer>
 </body>
 </html>

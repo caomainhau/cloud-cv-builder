@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.3.0 Account Recovery Release
+
+- Thêm trạng thái xác minh email cho tài khoản.
+- Tự đánh dấu tài khoản tồn tại trước migration là đã xác minh để không phá vỡ luồng sử dụng hiện tại.
+- Thêm gửi lại email xác minh với rate limit.
+- Thêm quên mật khẩu và đặt lại mật khẩu bằng token một lần, hết hạn sau 60 phút.
+- Thêm `Mailer` với chế độ `log` để kiểm thử local và chế độ `resend` để gửi email thật trên Render.
+- Thêm hộp thư kiểm thử local tại `/dev/mailbox`.
+- Thêm cập nhật họ tên hồ sơ tài khoản.
+- Thêm tải toàn bộ dữ liệu cá nhân thành JSON.
+- Thêm xóa vĩnh viễn tài khoản sau khi nhập lại mật khẩu và chuỗi xác nhận `XOA`.
+- Thêm bảng `email_verification_tokens`, `password_reset_tokens` và `mail_request_attempts`.
+- Thêm cột `users.email_verified_at` và `users.session_version`.
+- Tự vô hiệu hóa phiên đăng nhập cũ sau khi đổi hoặc đặt lại mật khẩu.
+- Bổ sung cURL extension trong Docker image để gọi Resend API.
+
 ## v1.2.0 UX Release
 
 - Thêm autosave cho trang chỉnh sửa CV với debounce phía trình duyệt.

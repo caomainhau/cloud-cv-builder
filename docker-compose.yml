@@ -22,6 +22,8 @@ services:
       SESSION_NAME: cloudcv_session
       PORT: 8080
       DATABASE_URL: postgresql://cloudcv:cloudcv_dev_password@db:5432/cloudcv
+      MAIL_MODE: log
+      REQUIRE_EMAIL_VERIFICATION: "true"
     ports:
       - "8080:8080"
     depends_on:

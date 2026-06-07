@@ -244,3 +244,21 @@ small, .small { font-size: 12px; }
     .share-grid { grid-template-columns: 1fr; }
     .copy-row { flex-direction: column; }
 }
+
+/* v1.3 Account Recovery Release */
+.account-heading { align-items: center; }
+.verification-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 15px 0 4px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--muted); font-size: 14px; font-weight: 700; }
+.danger-zone { border-color: #fecaca; background: #fffafa; }
+.danger-zone h2 { color: var(--danger); }
+.danger-zone .button { margin-top: 15px; }
+.auth-note + .auth-note { margin-top: 8px; }
+.mailbox-list { display: grid; gap: 14px; margin-top: 20px; }
+.mailbox-item { overflow: hidden; }
+.mailbox-meta { display: flex; justify-content: space-between; gap: 12px; }
+.mailbox-preview { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); overflow-x: auto; }
+code { padding: 2px 5px; border-radius: 5px; background: #eaf1ef; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .92em; }
+@media (max-width: 760px) {
+    .nav { gap: 10px; font-size: 14px; }
+    .account-heading { align-items: stretch; }
+    .mailbox-meta { flex-direction: column; }
+}

@@ -10,9 +10,13 @@ require_once __DIR__ . '/Migrator.php';
 require_once __DIR__ . '/Csrf.php';
 require_once __DIR__ . '/ActivityLogger.php';
 require_once __DIR__ . '/LoginThrottle.php';
+require_once __DIR__ . '/ActionThrottle.php';
+require_once __DIR__ . '/Mailer.php';
+require_once __DIR__ . '/AccountTokenRepository.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/ResumeRepository.php';
 require_once __DIR__ . '/ResumeShareRepository.php';
+require_once __DIR__ . '/AccountRepository.php';
 
 $sessionName = env_value('SESSION_NAME', 'cloudcv_session') ?? 'cloudcv_session';
 session_name($sessionName);

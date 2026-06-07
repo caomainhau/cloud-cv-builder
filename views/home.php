@@ -1,3 +1,6 @@
+<?php if (($_GET['account_deleted'] ?? '') === '1'): ?>
+    <div class="container flash-stack"><div class="flash flash-success">Tài khoản và dữ liệu của bạn đã được xóa.</div></div>
+<?php endif; ?>
 <section class="hero">
     <div class="container hero-grid">
         <div>
